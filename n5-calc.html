@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>N5 Cost Calculator</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css"/>
+    <script data-main="js/n5-calc" defer="defer" src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.9/require.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <form id='form' role='form'>
+        <div id="questions"></div>
+        
+        <!-- button type="submit" class="btn btn-default" id='link-here'>Link here</button -->
+      </form>
+      <br/>
+
+      <div id="result" >
+        <h2><span class="glyphicon glyphicon-info-sign"></span> Your options</h2>
+        <table class='table table-hover'>
+          <thead><tr>
+            <th>Carrier</th>
+            <th>ISP Fee</th>
+            <th>In-network off-peak voice fee</th>
+            <th>Voice usage cost</th>
+            <th>Data</th>
+            <th>Limit</th>
+            <th>Throttle</th>
+            <th>Carrier handset purchase</th>
+            <th>Initial handset cost</th>
+            <th>Monthly handset cost</th>
+            <th>Handset months</th>
+            <th>BYO Nexus 5 cost</th>
+            <th>New contract discount</th>
+            <th>New contract discount months</th>
+            <th>Monthly total</th>
+            <th>2-year total</th>
+          </tr></thead>
+          <tbody id='result-tbody'></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script type="text/html" id="template-carrier-row">
+      <tr>
+        <td>{name}</td>
+        <td>{monthly_isp_fee}</td>
+        <td>{monthly_in_network_offpeak_voice_fee}</td>
+        <td>{voice_usage_cost} ({voice_per_minute}/min)</td>
+        <td>{monthly_data_fee}</td>
+        <td>{monthly_data_limit}</td>
+        <td>{monthly_data_throttle}</td>
+        <td>{handset}</td>
+        <td>{initial_handset_cost}</td>
+        <td>{monthly_handset_cost}</td>
+        <td>{handset_months}</td>
+        <td>{byo_handset_cost}</td>
+        <td class="{new_contract_discount_class}">{new_contract_discount}</td>
+        <td>{new_contract_discount_months}</td>
+        <td>{total_monthly_cost}</td>
+        <td>{total_2year_cost}</td>
+      </tr>
+    </script>
+
+    <script type="text/html" id="template-bool">
+      <div class="form-group">
+        <h3><span class="glyphicon glyphicon-question-sign"></span> {text}</h3>
+        <div class="btn-group" data-toggle="buttons">
+          <label class="btn btn-primary n5-toggle-yes {yes_active}" id="{id}-yes-label">
+            <input type="radio" name="{id}" id="{id}-yes-input" value="yes" {yes_checked} /> Yes
+          </label>
+          <label class="btn btn-primary n5-toggle-no {no_active}" id="{id}-no-label">
+            <input type="radio" name="{id}" id="{id}-no-input" value="no" {no_checked} /> No
+          </label>
+        </div>
+      </div>
+      {ifso}
+    </script>
+
+    <script type="text/html" id="template-ifso">
+      <div class="well" {style} id="{id}">
+        {ifso}
+      </div>
+    </script>
+
+    <script type="text/html" id="template-multi">
+      <div class="form-group">
+        <h3><span class="glyphicon glyphicon-question-sign"></span> {text}</h3>
+        <div class="btn-group" data-toggle="buttons">
+          {choices}
+        </div>
+      </div>
+    </script>
+
+    <script type="text/html" id="template-choice">
+      <label class="btn btn-primary">
+        <input type="radio" name="{name}" id="{name}-{value}" value="{value}"/> {text}
+      </label>
+    </script>
+
+    <script type="text/html" id="template-num">
+      <div class="form-group">
+        <h3><span class="glyphicon glyphicon-question-sign"></span> {text}</h3>
+        <div class="input-group">
+          <input type="number" class="form-control" name="{name}" value="{initial}"/>
+          <span class="input-group-addon">{suffix}</span>
+        </div>
+      </div>
+    </script>
+  </body>
+</html>
