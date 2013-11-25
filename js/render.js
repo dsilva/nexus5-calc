@@ -42,7 +42,6 @@ define(['template'], function(T) {
   };
 
   function render(q) {
-    console.log('render',q);
     return renderFor[q.type](q);
   }
 

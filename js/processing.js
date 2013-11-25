@@ -1,12 +1,18 @@
 define(['data'], function(D) {
   var options = D.options;
-  
+
+  var notApplicable = 'N/A';
+  var nexus5CostFromGooglePlay = 39800;
+
   function formatYen(yen) { return '<nobr>' + yen + '円</nobr>'; }
 
   function link(url, text) { return '<a href="'+url+'">'+text+'</a>'; }
 
-  var notApplicable = 'N/A';
-  var nexus5CostFromGooglePlay = 39800;
+  function bool(str) { return str === 'yes'; }
+
+  function maybe(cond, value) { return cond ? value : notApplicable;  }
+
+  function formatMaybe(val) { return val || notApplicable; }
 
   function process(answers) {
     return options.map(function (opt) {
@@ -14,25 +20,37 @@ define(['data'], function(D) {
         opt.newContractMonthlyDiscount && opt.newContractMonthlyDiscount.yen;
 
       var eligibleForNewContractDiscount =
-        !answers.have_contract || answers.which_carrier !== opt.carrier;
-
+        !bool(answers.have_contract) || answers.which_carrier !== opt.carrier;
       var newContractDiscount =
-        (newContractDiscountAvailable && eligibleForNewContractDiscount) ? opt.newContractMonthlyDiscount.yen : 0;
+        (newContractDiscountAvailable && eligibleForNewContractDiscount) ?
+          opt.newContractMonthlyDiscount.yen
+        : 0;
 
       var monthlyInNetworkVoice = opt.monthlyInNetworkVoice;
-      var monthlyInNetworkVoiceYen = monthlyInNetworkVoice ? opt.monthlyInNetworkVoice.yen : 0;
-      var requiredHandsetPurchase = opt.requiredHandsetPurchase;
-      var handsetMonthly = requiredHandsetPurchase ? opt.requiredHandsetPurchase.monthly : 0;
+      var monthlyInNetworkVoiceYen = monthlyInNetworkVoice ?
+        opt.monthlyInNetworkVoice.yen
+      : 0;
+
+      var carrierSellsNexus5 = opt.requiredHandsetPurchase
+        && opt.requiredHandsetPurchase.model === 'Nexus 5';
+
+      var requiredHandsetPurchase = (eligibleForNewContractDiscount || carrierSellsNexus5)
+        && opt.requiredHandsetPurchase;
+
+      var handsetMonthly = requiredHandsetPurchase ?
+        opt.requiredHandsetPurchase.monthly
+      : 0;
 
       var voiceUsageCost =
         (parseInt(answers.softbank_mins, 10) || 0) * (
           monthlyInNetworkVoice && opt.monthlyInNetworkVoice.network === 'softbank' ?
-            0 :
-            opt.voicePerMinute.yen)
+            0
+          : opt.voicePerMinute.yen)
         + (parseInt(answers.other_mins, 10) || 0) * opt.voicePerMinute.yen;
 
-      var byoHandsetCost = opt.requiredHandsetPurchase && opt.requiredHandsetPurchase.model === 'Nexus 5' ?
-        0 : nexus5CostFromGooglePlay;
+      var byoHandsetCost = carrierSellsNexus5 || bool(answers.have_n5) ?
+        0
+      : nexus5CostFromGooglePlay;
 
       var monthly = opt.ispFee.yen + monthlyInNetworkVoiceYen + opt.monthlyData.yen
         + handsetMonthly - newContractDiscount + voiceUsageCost;
@@ -40,28 +58,31 @@ define(['data'], function(D) {
       return {
         name: opt.carrier,
         monthly_isp_fee: formatYen(opt.ispFee.yen),
+
         monthly_in_network_offpeak_voice_fee:
-          monthlyInNetworkVoice ?
-            link(opt.monthlyInNetworkVoice.url, formatYen(opt.monthlyInNetworkVoice.yen))
-            : notApplicable,
+          formatMaybe(monthlyInNetworkVoice
+            && link(opt.monthlyInNetworkVoice.url, formatYen(opt.monthlyInNetworkVoice.yen))),
         voice_per_minute: formatYen(opt.voicePerMinute.yen),
         voice_usage_cost: formatYen(voiceUsageCost),
+
         monthly_data_fee: formatYen(opt.monthlyData.yen),
         monthly_data_limit: opt.monthlyData.limitGB + 'GB',
         monthly_data_throttle: opt.monthlyData.throttleKbps + 'Kbps',
-        handset: requiredHandsetPurchase ? opt.requiredHandsetPurchase.model : notApplicable,
-        initial_handset_cost: requiredHandsetPurchase ? formatYen(opt.requiredHandsetPurchase.initial) : notApplicable,
-        monthly_handset_cost: requiredHandsetPurchase ? formatYen(handsetMonthly) : notApplicable,
-        handset_months: requiredHandsetPurchase ? opt.requiredHandsetPurchase.months : notApplicable,
 
-        byo_handset_cost: byoHandsetCost ? formatYen(byoHandsetCost) : notApplicable,
+        handset: formatMaybe(requiredHandsetPurchase && opt.requiredHandsetPurchase.model),
+        initial_handset_cost: formatMaybe(requiredHandsetPurchase && formatYen(opt.requiredHandsetPurchase.initial)),
+        monthly_handset_cost: formatMaybe(requiredHandsetPurchase && formatYen(handsetMonthly)),
+        handset_months: formatMaybe(requiredHandsetPurchase && opt.requiredHandsetPurchase.months),
+
+        byo_handset_cost: maybe(byoHandsetCost, formatYen(byoHandsetCost)),
  
-        new_contract_discount: newContractDiscountAvailable ? formatYen(newContractDiscount) : notApplicable,
+        new_contract_discount: maybe(newContractDiscountAvailable, formatYen(newContractDiscount)),
         new_contract_discount_class:
           newContractDiscountAvailable && eligibleForNewContractDiscount ? 'text-success'
-          : newContractDiscountAvailable ? 'text-warning'
-          : '',
-        new_contract_discount_months: newContractDiscountAvailable ? opt.newContractMonthlyDiscount.months : notApplicable,
+        : newContractDiscountAvailable ? 'text-warning'
+        : '',
+        new_contract_discount_months: formatMaybe(newContractDiscountAvailable && opt.newContractMonthlyDiscount.months),
+
         total_monthly_cost: formatYen(monthly),
         total_2year_cost: formatYen(
           monthly * 24
